@@ -33,56 +33,54 @@ void tampilkan(struct permainan* p)
 {
     printf("\033[2J");
     printf("\033[H");
-    printf("----------------------\n");
+    printf("---------------------------\n");
     for (int j = UKURAN - 1; j >= 0; --j) {
-        printf("|");
         for (int i = 0; i < UKURAN; ++i) {
             if (p->ubin[i][j]) {
                 switch (p->ubin[i][j]) {
                     case 2:
-                        printf("\033[38;5;1m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;1m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 4:
-                        printf("\033[38;5;9m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;9m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 8:
-                        printf("\033[38;5;10m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;10m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 16:
-                        printf("\033[38;5;11m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;11m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 32:
-                        printf("\033[38;5;12m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;12m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 64:
-                        printf("\033[38;5;13m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;13m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 128:
-                        printf("\033[38;5;14m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;14m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 256:
-                        printf("\033[38;5;15m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;15m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 512:
-                        printf("\033[38;5;16m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;16m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 1024:
-                        printf("\033[38;5;17m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;17m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     case 2048:
-                        printf("\033[38;5;18m%4d \033[0m", p->ubin[i][j]);
+                        printf("\033[38;5;18m|%4d| \033[0m", p->ubin[i][j]);
                         break;
                     default:
-                        printf("%4d ", p->ubin[i][j]);
+                        printf("|%4d| ", p->ubin[i][j]);
                         break;
                 }
             } else {
-                printf("     ");
+                printf("|    | ");
             }
         }
-        printf("|\n");
+        printf("\n---------------------------\n");
     }
-    printf("----------------------\n");
 }
 
 void putar(struct permainan* p)
@@ -183,7 +181,7 @@ void gerak(struct permainan* p, int arah)
 
 int baca_gerakan(void)
 {
-    char tombol[GERAKAN] = {'s','w','a','d'};
+    char tombol[GERAKAN] = {'k','i','j','l'};
     int c;
     int i;
     while (isspace(c = getchar()));
@@ -238,29 +236,64 @@ int permainan_berakhir(struct permainan* p)
     return 1; // Tidak ada gerakan yang valid, permainan berakhir
 }
 
+void menu()
+{
+    printf("\033[38;5;1mMAIN MENU\033[0m\n");
+    printf("1. New Game\n");
+    printf("2. Display Score\n");
+    printf("3. Exit\n");
+}
+
 int main()
 {
     int c;
+    int option;
     struct permainan p = { .skor = 0 };
-    mulai(&p);
-    tampilkan(&p);
-    int skor_baru;
-    perbarui_skor(&p, &skor_baru);
-    printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
-    ambil_stdin();
-    while ((c = baca_gerakan()) != EOF) {
-        int skor_lama = p.skor;
-        gerak(&p, c);
-        perbarui_skor(&p, &skor_baru);
-        tampilkan(&p);
-        printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
+    menu();
 
-        if (permainan_berakhir(&p)) {
-            printf("\033[38;5;1mPERMAINAN BERAKHIR!\033[0m\n");
-            printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
+    do
+    {
+        printf("\033[38;5;1mEnter option (1-3): \033[0m");
+        scanf("%d", &option);
+
+        switch (option)
+        {
+        case 1:
+            mulai(&p);
+            tampilkan(&p);
+            perbarui_skor(&p, &p.skor);
+            printf("\033[38;5;1mSKOR: %d\033[0m\n", p.skor);
+            ambil_stdin();
+            while ((c = baca_gerakan()) != EOF)
+            {
+                int skor_lama = p.skor;
+                gerak(&p, c);
+                perbarui_skor(&p, &p.skor);
+                tampilkan(&p);
+                printf("\033[38;5;1mSKOR: %d\033[0m\n", p.skor);
+
+                if (permainan_berakhir(&p))
+                {
+                    printf("\033[38;5;1mPERMAINAN BERAKHIR!\033[0m\n");
+                    printf("\033[38;5;1mSKOR: %d\033[0m\n", p.skor);
+                    break;
+                }
+            }
+            berikan_stdin();
+            break;
+        case 2:
+            printf("\033[38;5;1mDisplay Score: %d\033[0m\n", p.skor);
+            break;
+        case 3:
+            printf("\033[38;5;1mExit\033[0m\n");
+            break;
+        default:
+            printf("\033[38;5;1mInvalid option\033[0m\n");
             break;
         }
-    }
-    berikan_stdin();
+
+        menu();
+    } while (option != 3);
+
     return 0;
 }
