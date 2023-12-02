@@ -31,20 +31,58 @@ int nilai_acak(struct permainan* p)
 
 void tampilkan(struct permainan* p)
 {
-    printf("\033[2J"); // Clear the terminal
-    printf("\033[H"); // Move the cursor to the top-left corner
-    printf("--------------------------\n");
+    printf("\033[2J");
+    printf("\033[H");
+    printf("----------------------\n");
     for (int j = UKURAN - 1; j >= 0; --j) {
         printf("|");
         for (int i = 0; i < UKURAN; ++i) {
-            if (p->ubin[i][j])
-                printf("%4d  ", p->ubin[i][j]);
-            else
-                printf("      ");
+            if (p->ubin[i][j]) {
+                switch (p->ubin[i][j]) {
+                    case 2:
+                        printf("\033[38;5;1m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 4:
+                        printf("\033[38;5;9m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 8:
+                        printf("\033[38;5;10m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 16:
+                        printf("\033[38;5;11m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 32:
+                        printf("\033[38;5;12m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 64:
+                        printf("\033[38;5;13m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 128:
+                        printf("\033[38;5;14m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 256:
+                        printf("\033[38;5;15m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 512:
+                        printf("\033[38;5;16m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 1024:
+                        printf("\033[38;5;17m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    case 2048:
+                        printf("\033[38;5;18m%4d \033[0m", p->ubin[i][j]);
+                        break;
+                    default:
+                        printf("%4d ", p->ubin[i][j]);
+                        break;
+                }
+            } else {
+                printf("     ");
+            }
         }
         printf("|\n");
     }
-    printf("--------------------------\n");
+    printf("----------------------\n");
 }
 
 void putar(struct permainan* p)
@@ -187,17 +225,17 @@ int permainan_berakhir(struct permainan* p)
     for (int i = 0; i < UKURAN; ++i) {
         for (int j = 0; j < UKURAN; ++j) {
             if (p->ubin[i][j] == 0) {
-                return 0; // There is an empty tile, game is not ended
+                return 0; // Ada petak kosong, permainan tidak berakhir
             }
             if (i < UKURAN - 1 && p->ubin[i][j] == p->ubin[i+1][j]) {
-                return 0; // There is a horizontal adjacent tile with the same value
+                return 0; // Ada petak horizontal yang berdampingan dengan nilai yang sama
             }
             if (j < UKURAN - 1 && p->ubin[i][j] == p->ubin[i][j+1]) {
-                return 0; // There is a vertical adjacent tile with the same value
+                return 0; // Ada petal yang berdampingan secara vertikal dengan nilai yang sama
             }
         }
     }
-    return 1; // No valid moves, game is ended
+    return 1; // Tidak ada gerakan yang valid, permainan berakhir
 }
 
 int main()
