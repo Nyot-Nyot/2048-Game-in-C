@@ -143,7 +143,7 @@ void gerak(struct permainan* p, int arah)
 
 int baca_gerakan(void)
 {
-    char tombol[GERAKAN] = {'k','i','j','l'};
+    char tombol[GERAKAN] = {'s','w','a','d'};
     int c;
     int i;
     while (isspace(c = getchar()));
