@@ -31,6 +31,8 @@ int nilai_acak(struct permainan* p)
 
 void tampilkan(struct permainan* p)
 {
+    printf("\033[2J"); // Clear the terminal
+    printf("\033[H"); // Move the cursor to the top-left corner
     printf("--------------------------\n");
     for (int j = UKURAN - 1; j >= 0; --j) {
         printf("|");
@@ -185,17 +187,17 @@ int permainan_berakhir(struct permainan* p)
     for (int i = 0; i < UKURAN; ++i) {
         for (int j = 0; j < UKURAN; ++j) {
             if (p->ubin[i][j] == 0) {
-                return 0; // Ada ubin kosong, permainan tidak berakhir
+                return 0; // There is an empty tile, game is not ended
             }
             if (i < UKURAN - 1 && p->ubin[i][j] == p->ubin[i+1][j]) {
-                return 0; // Ada ubin yang bersebelahan secara horizontal dengan nilai yang sama
+                return 0; // There is a horizontal adjacent tile with the same value
             }
             if (j < UKURAN - 1 && p->ubin[i][j] == p->ubin[i][j+1]) {
-                return 0; // Ada ubin vertikal yang bersebelahan dengan nilai yang sama
+                return 0; // There is a vertical adjacent tile with the same value
             }
         }
     }
-    return 1; // Tidak ada gerakan yang valid, permainan berakhir
+    return 1; // No valid moves, game is ended
 }
 
 int main()
@@ -211,15 +213,15 @@ int main()
     while ((c = baca_gerakan()) != EOF) {
         int skor_lama = p.skor;
         gerak(&p, c);
-        tampilkan(&p);
         perbarui_skor(&p, &skor_baru);
+        tampilkan(&p);
+        printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
 
         if (permainan_berakhir(&p)) {
             printf("\033[38;5;1mPERMAINAN BERAKHIR!\033[0m\n");
             printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
             break;
         }
-        printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
     }
     berikan_stdin();
     return 0;
