@@ -171,16 +171,13 @@ void berikan_stdin(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &cadangan);
 }
 
-void perbarui_skor(struct permainan* p, int skor_lama)
+void perbarui_skor(struct permainan* p, int* skor_baru)
 {
-    int skor_baru = 0;
+    *skor_baru = 0;
     for (int i = 0; i < UKURAN; ++i)
         for (int j = 0; j < UKURAN; ++j)
             if (p->ubin[i][j] != 0)
-                skor_baru += p->ubin[i][j];
-
-    if (skor_baru != skor_lama)
-        printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
+                *skor_baru += p->ubin[i][j];
 }
 
 int permainan_berakhir(struct permainan* p)
@@ -199,17 +196,19 @@ int main()
     struct permainan p = { .skor = 0 };
     mulai(&p);
     tampilkan(&p);
-    perbarui_skor(&p, p.skor);
+    int skor_baru;
+    perbarui_skor(&p, &skor_baru);
+    printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
     ambil_stdin();
     while ((c = baca_gerakan()) != EOF) {
         int skor_lama = p.skor;
         gerak(&p, c);
         tampilkan(&p);
-        perbarui_skor(&p, skor_lama);
+        perbarui_skor(&p, &skor_baru);
 
         if (permainan_berakhir(&p)) {
             printf("\033[38;5;1mPERMAINAN BERAKHIR!\033[0m\n");
-            printf("\033[38;5;1mSKOR: %d\033[0m\n", p.skor);
+            printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
             break;
         }
     }
