@@ -182,13 +182,21 @@ void perbarui_skor(struct permainan* p, int* skor_baru)
 
 int permainan_berakhir(struct permainan* p)
 {
-    for (int i = 0; i < UKURAN - 1; ++i)
-        for (int j = 0; j < UKURAN - 1; ++j)
-            if (p->ubin[i][j] == p->ubin[i+1][j] || p->ubin[i][j] == p->ubin[i][j+1])
-                return 0;
-    return 1;
+    for (int i = 0; i < UKURAN; ++i) {
+        for (int j = 0; j < UKURAN; ++j) {
+            if (p->ubin[i][j] == 0) {
+                return 0; // There is an empty tile, game is not ended
+            }
+            if (i < UKURAN - 1 && p->ubin[i][j] == p->ubin[i+1][j]) {
+                return 0; // There is a horizontal adjacent tile with the same value
+            }
+            if (j < UKURAN - 1 && p->ubin[i][j] == p->ubin[i][j+1]) {
+                return 0; // There is a vertical adjacent tile with the same value
+            }
+        }
+    }
+    return 1; // No valid moves, game is ended
 }
-
 
 int main()
 {
@@ -211,6 +219,7 @@ int main()
             printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
             break;
         }
+        printf("\033[38;5;1mSKOR: %d\033[0m\n", skor_baru);
     }
     berikan_stdin();
     return 0;
