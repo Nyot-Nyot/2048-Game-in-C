@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <termios.h>
 #include <unistd.h>
+#include <time.h>
 
 #define UKURAN 4
 
@@ -196,7 +197,7 @@ int baca_gerakan(void)
 static struct termios cadangan;
 static struct termios saat_ini;
 
-void ambil_stdin(void)
+void get_stdin(void)
 {
     tcgetattr(STDIN_FILENO, &cadangan);
     saat_ini = cadangan;
@@ -204,7 +205,7 @@ void ambil_stdin(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &saat_ini);
 }
 
-void berikan_stdin(void)
+void give_stdin(void)
 {
     tcsetattr(STDIN_FILENO, TCSANOW, &cadangan);
 }
@@ -249,10 +250,11 @@ int main()
     int c;
     int option;
     struct permainan p = { .skor = 0 };
-    menu();
+    srand(time(NULL));
 
     do
     {
+        menu();
         printf("\033[38;5;1mEnter option (1-3): \033[0m");
         scanf("%d", &option);
 
@@ -263,7 +265,7 @@ int main()
             tampilkan(&p);
             perbarui_skor(&p, &p.skor);
             printf("\033[38;5;1mSKOR: %d\033[0m\n", p.skor);
-            ambil_stdin();
+            get_stdin();
             while ((c = baca_gerakan()) != EOF)
             {
                 int skor_lama = p.skor;
@@ -279,7 +281,7 @@ int main()
                     break;
                 }
             }
-            berikan_stdin();
+            give_stdin();
             break;
         case 2:
             printf("\033[38;5;1mDisplay Score: %d\033[0m\n", p.skor);
@@ -291,8 +293,6 @@ int main()
             printf("\033[38;5;1mInvalid option\033[0m\n");
             break;
         }
-
-        menu();
     } while (option != 3);
 
     return 0;
