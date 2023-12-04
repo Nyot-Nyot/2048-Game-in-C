@@ -27,10 +27,10 @@ Then you can run the program with the following command:
 
 To play the game, use the following keys:
 
-- k: move down
-- i: move up
-- j: move left
-- l: move right
-- q: quit the game
+- `k`: move down
+- `i`: move up
+- `j`: move left
+- `l`: move right
+- `q`: quit the game
 
 Have fun!
