@@ -16,7 +16,7 @@ This is a C program that implements the popular 2048 game. The game is played on
 To run the program, you need a C compiler and a terminal that supports ANSI escape codes. You can compile the program with the following command:
 
 ```bash
-gcc -o 2048 2048.c
+gcc 2048_game.c -o 2048
 ```
 
 Then you can run the program with the following command:
