@@ -1,299 +1,367 @@
+// Program C untuk permainan 2048
+// Menggunakan library termios untuk input tanpa echo dan buffering
+// Menggunakan ANSI escape codes untuk warna dan posisi kursor
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <time.h>
 #include <termios.h>
 #include <unistd.h>
-#include <time.h>
 
+// Konstanta untuk ukuran papan permainan
 #define UKURAN 4
 
+// Konstanta untuk warna ubin
+#define RESET "\033[0m"
+#define RED "\033[38;5;1m"
+#define GREEN "\033[38;5;2m"
+#define YELLOW "\033[38;5;3m"
+#define BLUE "\033[38;5;4m"
+#define MAGENTA "\033[38;5;5m"
+#define CYAN "\033[38;5;6m"
+#define WHITE "\033[38;5;7m"
+
+// Konstanta untuk lebar ubin
+#define WIDTH 4
+
+// Konstanta untuk tombol input
+#define UP 'i'
+#define LEFT 'j'
+#define DOWN 'k'
+#define RIGHT 'l'
+#define QUIT 'q'
+
+// Struct untuk menyimpan data permainan
 struct permainan {
     int ubin[UKURAN][UKURAN];
     int skor;
+    char arah;
 };
 
-enum {
-    BAWAH,
-    ATAS,
-    KIRI,
-    KANAN,
-    GERAKAN
+// Struct untuk menyimpan data skor
+struct ScoreEntry {
+    char username[20];
+    int score;
 };
 
-int posisi_acak(struct permainan* p)
-{
-    return rand() % UKURAN;
+// Fungsi untuk mengacak posisi ubin kosong pada papan permainan
+int posisi_acak(struct permainan* p){
+  return rand() % UKURAN;
 }
 
-int nilai_acak(struct permainan* p)
-{
-    return (rand() % 10) ? 2 : 4;
+// Fungsi untuk mengembalikan warna sesuai dengan nilai ubin
+char* warna(int n) {
+    switch (n) {
+        case 2: return RED;
+        case 4: return GREEN;
+        case 8: return YELLOW;
+        case 16: return BLUE;
+        case 32: return MAGENTA;
+        case 64: return CYAN;
+        case 128: return WHITE;
+        case 256: return RED;
+        case 512: return GREEN;
+        case 1024: return YELLOW;
+        case 2048: return BLUE;
+        default: return RESET;
+    }
 }
 
-void tampilkan(struct permainan* p)
-{
-    printf("\033[2J");
-    printf("\033[H");
+// Fungsi untuk menampilkan papan permainan
+void tampil_papan(struct permainan* p) {
+    printf("\033[2J\033[1;1H");
+    printf("Skor: %d\n", p->skor);
+    // Menampilkan ubin dengan warna sesuai nilai
     printf("---------------------------\n");
-    for (int j = UKURAN - 1; j >= 0; --j) {
-        for (int i = 0; i < UKURAN; ++i) {
-            if (p->ubin[i][j]) {
-                switch (p->ubin[i][j]) {
-                    case 2:
-                        printf("\033[38;5;1m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 4:
-                        printf("\033[38;5;9m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 8:
-                        printf("\033[38;5;10m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 16:
-                        printf("\033[38;5;11m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 32:
-                        printf("\033[38;5;12m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 64:
-                        printf("\033[38;5;13m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 128:
-                        printf("\033[38;5;14m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 256:
-                        printf("\033[38;5;15m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 512:
-                        printf("\033[38;5;16m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 1024:
-                        printf("\033[38;5;17m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    case 2048:
-                        printf("\033[38;5;18m|%4d| \033[0m", p->ubin[i][j]);
-                        break;
-                    default:
-                        printf("|%4d| ", p->ubin[i][j]);
-                        break;
-                }
-            } else {
-                printf("|    | ");
-            }
-        }
-        printf("\n---------------------------\n");
-    }
-}
-
-void putar(struct permainan* p)
-{
-    struct permainan p2;
-    for (int i = 0; i < UKURAN; ++i)
-        for (int j = 0; j < UKURAN; ++j)
-            p2.ubin[i][j] = p->ubin[j][i];
-    *p = p2;
-}
-
-void balik(struct permainan* p)
-{
-    struct permainan p2;
-    for (int i = 0; i < UKURAN; ++i)
-        for (int j = 0; j < UKURAN; ++j)
-            p2.ubin[i][j] = p->ubin[i][UKURAN - j - 1];
-    *p = p2;
-}
-
-void mulai(struct permainan* p)
-{
-    struct permainan p2 = {};
-    *p = p2;
-    p->ubin[posisi_acak(p)][posisi_acak(p)] = nilai_acak(p);
-    p->ubin[posisi_acak(p)][posisi_acak(p)] = nilai_acak(p);
-}
-
-void jatuh_kolom(int* a, int* b)
-{
-    int prev = 0;
-    int j = 0;
-    for (int i = 0; i < UKURAN; ++i) {
-        if (a[i]) {
-            if (a[i] == prev) {
-                b[j - 1] *= 2;
-                prev = 0;
-            } else {
-                b[j++] = a[i];
-                prev = a[i];
-            }
-        }
-    }
-}
-
-void jatuh(struct permainan* p)
-{
-    struct permainan p2 = {};
-    for (int i = 0; i < UKURAN; ++i)
-        jatuh_kolom(p->ubin[i], p2.ubin[i]);
-    *p = p2;
-}
-
-int sama(struct permainan* a, struct permainan* b)
-{
-    for (int i = 0; i < UKURAN; ++i)
-        for (int j = 0; j < UKURAN; ++j)
-            if (a->ubin[i][j] != b->ubin[i][j])
-                return 0;
-    return 1;
-}
-
-int coba_jatuh(struct permainan* p)
-{
-    struct permainan p2 = *p;
-    jatuh(p);
-    if (sama(p, &p2))
-        return 0;
-    return 1;
-}
-
-void muncul(struct permainan* p)
-{
-    int i, j;
-    while (1) {
-        i = posisi_acak(p);
-        j = posisi_acak(p);
-        if (!p->ubin[i][j]) {
-            p->ubin[i][j] = nilai_acak(p);
-            return;
-        }
-    }
-}
-
-void gerak(struct permainan* p, int arah)
-{
-    if (arah / 2)
-        putar(p);
-    if (arah % 2)
-        balik(p);
-    if (coba_jatuh(p))
-        muncul(p);
-    if (arah % 2)
-        balik(p);
-    if (arah / 2)
-        putar(p);
-}
-
-int baca_gerakan(void)
-{
-    char tombol[GERAKAN] = {'k','i','j','l'};
-    int c;
-    int i;
-    while (isspace(c = getchar()));
-    if (c == EOF)
-        return c;
-    for (i = 0; i < GERAKAN; ++i)
-        if (c == tombol[i])
-            return i;
-    return EOF;
-}
-
-static struct termios cadangan;
-static struct termios saat_ini;
-
-void get_stdin(void)
-{
-    tcgetattr(STDIN_FILENO, &cadangan);
-    saat_ini = cadangan;
-    saat_ini.c_lflag &= (~ICANON & ~ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &saat_ini);
-}
-
-void give_stdin(void)
-{
-    tcsetattr(STDIN_FILENO, TCSANOW, &cadangan);
-}
-
-void perbarui_skor(struct permainan* p, int* skor_baru)
-{
-    *skor_baru = 0;
-    for (int i = 0; i < UKURAN; ++i)
-        for (int j = 0; j < UKURAN; ++j)
-            if (p->ubin[i][j] != 0)
-                *skor_baru += p->ubin[i][j];
-}
-
-int permainan_berakhir(struct permainan* p)
-{
-    for (int i = 0; i < UKURAN; ++i) {
-        for (int j = 0; j < UKURAN; ++j) {
+    for (int i = 0; i < UKURAN; i++) {
+        for (int j = 0; j < UKURAN; j++) {
             if (p->ubin[i][j] == 0) {
-                return 0; // Ada petak kosong, permainan tidak berakhir
+                printf("|%*s| ", WIDTH, " ");
+            } else {
+                printf("%s|%*d| %s", warna(p->ubin[i][j]), WIDTH, p->ubin[i][j], RESET);
             }
-            if (i < UKURAN - 1 && p->ubin[i][j] == p->ubin[i+1][j]) {
-                return 0; // Ada petak horizontal yang berdampingan dengan nilai yang sama
+        }
+        printf("\n");
+        printf("---------------------------\n");
+    }
+    printf("Tekan i, j, k, l untuk menggerakkan ubin ke atas, kiri, bawah, kanan.\n");
+    printf("Tekan q untuk keluar dari permainan.\n");
+}
+
+// Fungsi untuk memutar papan permainan searah jarum jam
+void putar(struct permainan* p) {
+    int temp[UKURAN][UKURAN];
+    for (int i = 0; i < UKURAN; i++) {
+        for (int j = 0; j < UKURAN; j++) {
+            temp[i][j] = p->ubin[j][UKURAN - i - 1];
+        }
+    }
+    for (int i = 0; i < UKURAN; i++) {
+        for (int j = 0; j < UKURAN; j++) {
+            p->ubin[i][j] = temp[i][j];
+        }
+    }
+}
+
+
+// Fungsi untuk membalik papan permainan secara horizontal
+void balik(struct permainan* p) {
+    int temp[UKURAN][UKURAN];
+    for (int i = 0; i < UKURAN; i++) {
+        for (int j = 0; j < UKURAN; j++) {
+            temp[i][j] = p->ubin[i][UKURAN - j - 1];
+        }
+    }
+    for (int i = 0; i < UKURAN; i++) {
+        for (int j = 0; j < UKURAN; j++) {
+            p->ubin[i][j] = temp[i][j];
+        }
+    }
+}
+
+// Fungsi untuk menggeser ubin ke kiri
+void geser_kiri(struct permainan* p) {
+    int x, y;
+    for (int i = 0; i < UKURAN; i++) {
+        x = 0;
+        y = 1;
+        while (y < UKURAN) {
+            if (p->ubin[i][y] != 0) {
+                if (p->ubin[i][x] == 0) {
+                    p->ubin[i][x] = p->ubin[i][y];
+                    p->ubin[i][y] = 0;
+                } else if (p->ubin[i][x] == p->ubin[i][y]) {
+                    p->ubin[i][x] *= 2;
+                    p->skor += p->ubin[i][x];
+                    p->ubin[i][y] = 0;
+                    x++;
+                } else {
+                    x++;
+                    if (x != y) {
+                        p->ubin[i][x] = p->ubin[i][y];
+                        p->ubin[i][y] = 0;
+                    }
+                }
             }
-            if (j < UKURAN - 1 && p->ubin[i][j] == p->ubin[i][j+1]) {
-                return 0; // Ada petal yang berdampingan secara vertikal dengan nilai yang sama
+            y++;
+        }
+    }
+}
+
+// Fungsi untuk menggerakkan ubin sesuai dengan arah input
+void gerak(struct permainan* p) {
+    switch (p->arah) {
+        case UP:
+            putar(p);
+            geser_kiri(p);
+            putar(p);
+            putar(p);
+            putar(p);
+            break;
+        case LEFT:
+            geser_kiri(p);
+            break;
+        case DOWN:
+            putar(p);
+            putar(p);
+            putar(p);
+            geser_kiri(p);
+            putar(p);
+            break;
+        case RIGHT:
+            balik(p);
+            geser_kiri(p);
+            balik(p);
+            break;
+    }
+}
+
+// Fungsi untuk mengecek apakah ada ubin kosong pada papan permainan
+int ada_ubin_kosong(struct permainan* p) {
+    for (int i = 0; i < UKURAN; i++) {
+        for (int j = 0; j < UKURAN; j++) {
+            if (p->ubin[i][j] == 0) {
+                return 1;
             }
         }
     }
-    return 1; // Tidak ada gerakan yang valid, permainan berakhir
+    return 0;
 }
 
-void menu()
-{
-    printf("\033[38;5;1mMAIN MENU\033[0m\n");
-    printf("1. New Game\n");
-    printf("2. Display Score\n");
-    printf("3. Exit\n");
-}
-
-int main()
-{
-    int c;
-    int option;
-    struct permainan p = { .skor = 0 };
-    srand(time(NULL));
-
-    do
-    {
-        menu();
-        printf("\033[38;5;1mEnter option (1-3): \033[0m");
-        scanf("%d", &option);
-
-        switch (option)
-        {
-        case 1:
-            mulai(&p);
-            tampilkan(&p);
-            perbarui_skor(&p, &p.skor);
-            printf("\033[38;5;1mSKOR: %d\033[0m\n", p.skor);
-            get_stdin();
-            while ((c = baca_gerakan()) != EOF)
-            {
-                int skor_lama = p.skor;
-                gerak(&p, c);
-                perbarui_skor(&p, &p.skor);
-                tampilkan(&p);
-                printf("\033[38;5;1mSKOR: %d\033[0m\n", p.skor);
-
-                if (permainan_berakhir(&p))
-                {
-                    printf("\033[38;5;1mPERMAINAN BERAKHIR!\033[0m\n");
-                    printf("\033[38;5;1mSKOR: %d\033[0m\n", p.skor);
-                    break;
-                }
+// Fungsi untuk mengecek apakah ada ubin yang bisa digabungkan pada papan permainan
+int ada_ubin_gabung(struct permainan* p) {
+    for (int i = 0; i < UKURAN; i++) {
+        for (int j = 0; j < UKURAN - 1; j++) {
+            if (p->ubin[i][j] == p->ubin[i][j + 1]) {
+                return 1;
             }
-            give_stdin();
-            break;
-        case 2:
-            printf("\033[38;5;1mDisplay Score: %d\033[0m\n", p.skor);
-            break;
-        case 3:
-            printf("\033[38;5;1mExit\033[0m\n");
-            break;
-        default:
-            printf("\033[38;5;1mInvalid option\033[0m\n");
-            break;
         }
-    } while (option != 3);
+    }
+    for (int i = 0; i < UKURAN - 1; i++) {
+        for (int j = 0; j < UKURAN; j++) {
+            if (p->ubin[i][j] == p->ubin[i + 1][j]) {
+                return 1;
+             }
+         }
+    }
+    return 0;
+}
+
+// Fungsi untuk mengecek apakah permainan sudah selesai
+int selesai(struct permainan* p) {
+    if (ada_ubin_kosong(p) || ada_ubin_gabung(p)) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+// Fungsi untuk mengatur input tanpa echo dan buffering
+void input_tanpa_echo(int echo) {
+    static struct termios oldt, newt;
+    if (echo) {
+        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    } else {
+        tcgetattr(STDIN_FILENO, &oldt);
+        newt = oldt;
+        newt.c_lflag &= ~(ICANON | ECHO);
+        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    }
+}
+
+// Fungsi untuk membaca input dari pengguna
+char baca_input() {
+    char c;
+    input_tanpa_echo(0);
+    c = getchar();
+    input_tanpa_echo(1);
+    return c;
+}
+
+// Fungsi untuk memulai permainan baru
+void mulai_baru(struct permainan* p) {
+    for (int i = 0; i < UKURAN; i++) {
+        for (int j = 0; j < UKURAN; j++) {
+            p->ubin[i][j] = 0;
+        }
+    }
+    
+    p->skor = 0;
+
+    // Menambahkan dua ubin acak dengan nilai 2 atau 4
+    int x, y;
+    x = posisi_acak(p);
+    y = posisi_acak(p);
+    p->ubin[x][y] = (rand() % 2 + 1) * 2;
+    x = posisi_acak(p);
+    y = posisi_acak(p);
+    p->ubin[x][y] = (rand() % 2 + 1) * 2;
+}
+
+// Fungsi untuk menampilkan menu utama
+void tampil_menu() {
+    printf("\033[2J\033[1;1H");
+    
+    // Menampilkan judul dan pilihan
+    printf("===== MENU UTAMA =====\n");
+    printf("Selamat datang di permainan 2048!\n");
+    printf("Pilih salah satu dari pilihan berikut:\n");
+    printf("1. Mulai permainan baru\n");
+    printf("2. Tampilkan skor tertinggi\n");
+    printf("3. Keluar dari program\n");
+}   
+
+// Fungsi untuk menampilkan skor tertinggi
+void tampil_skor() {
+    FILE* fp = fopen("scores.txt", "r");
+    if (fp == NULL) {
+        printf("Tidak dapat membuka file scores.txt\n");
+        return;
+    }
+    // Membuat array untuk menyimpan data skor
+    struct ScoreEntry scores[10];
+    int n = 0; // Jumlah data skor yang ada
+    // Membaca data skor dari file dan menyimpannya ke array
+    while (fscanf(fp, "%s %d", scores[n].username, &scores[n].score) == 2) {
+        n++;
+    }
+    // Menutup file scores.txt
+    fclose(fp);
+    // Mengurutkan array berdasarkan skor secara menurun
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (scores[i].score < scores[j].score) {
+                struct ScoreEntry temp = scores[i];
+                scores[i] = scores[j];
+                scores[j] = temp;
+            }   
+        }   
+    }
+    // Menampilkan skor tertinggi
+    printf("Skor tertinggi:\n");
+    printf("| No | Nama Pengguna | Skor |\n");
+    printf("|----|---------------|------|\n");
+    for (int i = 0; i < n; i++) {
+        printf("| %2d | %13s | %4d |\n", i + 1, scores[i].username, scores[i].score);
+    }
+}
+
+// Fungsi untuk menyimpan skor ke file scores.txt
+void simpan_skor(struct permainan* p) {
+    FILE* fp = fopen("scores.txt", "a");
+    if (fp == NULL) {
+        printf("Tidak dapat membuka file scores.txt\n");
+        return;
+    }
+
+    char username[20];
+    printf("Masukkan nama pengguna (maksimal 20 karakter): ");
+    scanf("%s", username);
+    fprintf(fp, "%s %d\n", username, p->skor);
+    fclose(fp);
+}
+
+// Fungsi utama
+int main() {
+    srand(time(NULL));
+    struct permainan p;
+    char pilihan;
+    
+        do{
+            tampil_menu();
+            pilihan = baca_input();
+
+            switch (pilihan) {
+                case '1':
+                    mulai_baru(&p);
+                    tampil_papan(&p);
+                    while (!selesai(&p)) {
+                        p.arah = baca_input();
+                        gerak(&p);
+                        if (ada_ubin_kosong(&p)) {
+                            int x, y;
+                            do {
+                                x = posisi_acak(&p);
+                                y = posisi_acak(&p);
+                            } while (p.ubin[x][y] != 0);
+                            p.ubin[x][y] = (rand() % 2 + 1) * 2;
+                        }
+                        tampil_papan(&p);
+                    }
+
+                    printf("Permainan selesai!\n");
+                    simpan_skor(&p);
+                    break;
+                case '2':
+                    tampil_skor();
+                    break;
+                case '3':
+                    printf("Terima kasih telah bermain!\n");
+                    return 0;
+                default:
+                    printf("Pilihan tidak valid. Silakan coba lagi.\n");
+            }
+        } while (pilihan != 3);
 
     return 0;
 }
