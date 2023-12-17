@@ -69,7 +69,7 @@ char* warna(int n) {
 
 // Fungsi untuk menampilkan papan permainan
 void tampil_papan(struct permainan* p) {
-    printf("\033[2J\033[1;1H");
+    system("clear");
     printf("Skor: %d\n", p->skor);
     printf("---------------------------\n");
     for (int i = 0; i < UKURAN; i++) {
@@ -87,7 +87,7 @@ void tampil_papan(struct permainan* p) {
     printf("Tekan q untuk keluar dari permainan.\n");
 }
 
-// Fungsi untuk memutar papan permainan searah jarum jam
+// Fungsi untuk memutar papan permainan berlawanan jarum jam
 void putar(struct permainan* p) {
     int temp[UKURAN][UKURAN];
     for (int i = 0; i < UKURAN; i++) {
@@ -101,7 +101,6 @@ void putar(struct permainan* p) {
         }
     }
 }
-
 
 // Fungsi untuk membalik papan permainan secara horizontal
 void balik(struct permainan* p) {
@@ -247,7 +246,6 @@ void mulai_baru(struct permainan* p) {
     
     p->skor = 0;
 
-    // Menambahkan dua ubin acak dengan nilai 2 atau 4
     int x, y;
     x = posisi_acak(p);
     y = posisi_acak(p);
@@ -259,7 +257,7 @@ void mulai_baru(struct permainan* p) {
 
 // Fungsi untuk menampilkan menu utama
 void tampil_menu() {
-    printf("\033[2J\033[1;1H");
+    system("clear");
     printf("===== MENU UTAMA =====\n");
     printf("Selamat datang di permainan 2048!\n");
     printf("Pilih salah satu dari pilihan berikut:\n");
@@ -275,16 +273,16 @@ void tampil_skor() {
         printf("Tidak dapat membuka file scores.txt\n");
         return;
     }
-    // Membuat array untuk menyimpan data skor
+    
     struct ScoreEntry scores[10];
-    int n = 0; // Jumlah data skor yang ada
-    // Membaca data skor dari file dan menyimpannya ke array
+    int n = 0;
+
     while (fscanf(fp, "%s %d", scores[n].username, &scores[n].score) == 2) {
         n++;
     }
 
     fclose(fp);
-    // Mengurutkan array berdasarkan skor secara menurun
+
     for (int i = 0; i < n - 1; i++) {
         for (int j = i + 1; j < n; j++) {
             if (scores[i].score < scores[j].score) {
@@ -295,7 +293,7 @@ void tampil_skor() {
         }   
     }
 
-    printf("\033[2J\033[1;1H");
+    system("clear");
     printf("Skor tertinggi:\n");
     printf("| No | Nama Pengguna | Skor |\n");
     printf("|----|---------------|------|\n");
@@ -346,7 +344,7 @@ int berdampak(struct permainan* p, char c) {
     for (int i = 0; i < UKURAN; i++) {
       for (int j = 0; j < UKURAN; j++) {
         if (p->ubin[i][j] != temp[i][j]) {
-          // Mengembalikan papan permainan ke keadaan sebelum input pengguna
+        // Mengembalikan papan permainan ke keadaan sebelum input pengguna
           for (int i = 0; i < UKURAN; i++) {
             for (int j = 0; j < UKURAN; j++) {
               p->ubin[i][j] = temp[i][j];
@@ -362,7 +360,6 @@ int berdampak(struct permainan* p, char c) {
   }
 }
 
-// Fungsi utama
 int main() {
   srand(time(NULL));
   struct permainan p;
@@ -385,7 +382,7 @@ int main() {
                   x = posisi_acak(&p);
                   y = posisi_acak(&p);
                 } while (p.ubin[x][y] != 0);
-                p.ubin[x][y] = (rand() % 2 + 1) * 2;
+                p.ubin[x][y] = (rand() % 10) ? 2 : 4;
               }
               tampil_papan(&p);
             }
@@ -398,7 +395,7 @@ int main() {
         break;
       case '2':
         tampil_skor();
-        printf("Tekan enter untuk kembali ke menu utama.\n");
+        printf("\nTekan enter untuk kembali ke menu utama.\n");
         getchar();
         break;
       case '3':
