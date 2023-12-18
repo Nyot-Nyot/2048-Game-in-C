@@ -130,7 +130,7 @@ void geser_kiri(struct permainan* p) {
                     p->ubin[i][y] = 0;
                 } else if (p->ubin[i][x] == p->ubin[i][y]) {
                     p->ubin[i][x] *= 2;
-                    p->skor += p->ubin[i][x];
+                    p->skor += p->ubin[i][x] / 2;
                     p->ubin[i][y] = 0;
                     x++;
                 } else {
@@ -206,13 +206,16 @@ int ada_ubin_gabung(struct permainan* p) {
 }
 
 // Fungsi untuk mengecek apakah permainan sudah selesai
-int selesai(struct permainan* p) {
-    if (ada_ubin_kosong(p) || ada_ubin_gabung(p)) {
+int selesai(struct permainan* p, char c) {
+    if (c == 'Q' || c == 'q') {
+        return 1;
+    } else if (ada_ubin_kosong(p) || ada_ubin_gabung(p)) {
         return 0;
     } else {
         return 1;
     }
 }
+
 
 // Fungsi untuk mengatur input tanpa echo dan buffering
 void input_tanpa_echo(int echo) {
@@ -371,7 +374,7 @@ int main() {
       case '1':
         mulai_baru(&p);
         tampil_papan(&p);
-        while (!selesai(&p)) {
+        while (!selesai(&p, p.arah)) {
           p.arah = baca_input();
           if (valid(p.arah)) {
             if (berdampak(&p, p.arah)) {
